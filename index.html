@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamische Superstar Übersicht</title>
+    <style>
+        body {
+            font-family: 'Arial Black', sans-serif;
+            background-color: #000;
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            background: #111;
+            padding: 30px 0;
+            text-align: center;
+            border-bottom: 4px solid #d00000;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        #searchBar {
+            width: 80%;
+            max-width: 400px;
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 2px solid #333;
+            background: #222;
+            color: white;
+            outline: none;
+        }
+
+        #searchBar:focus { border-color: #d00000; }
+
+        .superstar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 25px;
+            padding: 40px;
+            width: 90%;
+            max-width: 1400px;
+        }
+
+        .card {
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border-bottom: 4px solid #333;
+            text-align: center;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-bottom-color: #d00000;
+            box-shadow: 0 10px 20px rgba(208, 0, 0, 0.4);
+        }
+
+        .card img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            display: block;
+        }
+
+        .name-tag {
+            padding: 15px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            background: linear-gradient(to bottom, #222, #000);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>SUPERSTARS</h1>
+        <input type="text" id="searchBar" placeholder="CSV durchsuchen..." onkeyup="filterSuperstars()">
+    </header>
+
+    <div class="superstar-grid" id="grid">
+        <p>Lade Daten aus CSV...</p>
+    </div>
+
+    <script>
+        let allSuperstars = [];
+
+        // Funktion zum Laden und Parsen der CSV
+        async function loadCSV() {
+            try {
+                // Pfad zu deiner Datei (muss im selben Ordner liegen)
+                const response = await fetch('Namen und bilder.csv');
+                const data = await response.text();
+
+                // CSV in Zeilen trennen
+                const rows = data.split('\n').slice(1); // Überschrift überspringen
+
+                allSuperstars = rows.map(row => {
+                    // Trennung per Semikolon (wie in deiner Datei)
+                    const columns = row.split(';');
+                    if (columns.length >= 2) {
+                        return {
+                            name: columns[0].trim(),
+                            img: columns[1].trim()
+                        };
+                    }
+                    return null;
+                }).filter(item => item !== null && item.name !== "");
+
+                render(allSuperstars);
+            } catch (error) {
+                console.error("Fehler beim Laden der CSV:", error);
+                document.getElementById('grid').innerHTML = "<p>Fehler beim Laden der CSV-Datei. Stelle sicher, dass sie im selben Ordner liegt.</p>";
+            }
+        }
+
+        function render(data) {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            data.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<img src="${s.img}" alt="${s.name}"><div class="name-tag">${s.name}</div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterSuperstars() {
+            const term = document.getElementById('searchBar').value.toLowerCase();
+            const filtered = allSuperstars.filter(s => s.name.toLowerCase().includes(term));
+            render(filtered);
+        }
+
+        // CSV beim Start laden
+        loadCSV();
+    </script>
+</body>
+</html>
